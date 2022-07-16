@@ -4,7 +4,7 @@
          (prefix-in : parser-tools/lex-sre)
          parser-tools/yacc)
 (require "lexer.rkt")
-(require "expression.rkt")
+(require "exp.rkt")
 
 (provide (all-defined-out))
 
@@ -13,7 +13,7 @@
   (parser
     (start statements)
     (end EOF)
-    (error void)
+    (error (lambda (tok-ok? tok-name tok-value) (printf "Error in token ~s (~s)\n" tok-name tok-value)))
     (tokens num-token id-token empty-tokens)
     (grammar
       (statements
