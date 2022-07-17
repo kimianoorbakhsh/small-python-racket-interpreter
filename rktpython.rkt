@@ -43,8 +43,11 @@
       (break-val))
     (continue-exp ()
       (continue-val))
-    (assignment-exp (ID rhs)
-      (assign ID rhs))
+    (assignment-exp (lhs rhs)
+      (cases exp lhs
+        (assignment-lhs-exp (ID type)
+          (assign ID rhs))
+        (else (report-type-error 'value-of))))
     (return-stmt-exp (exp1)
       (return-val (value-of exp1)))
     (none-exp () (none-val))
@@ -57,13 +60,16 @@
         (pyprint (value-of value))
         (displayln "")
         (void-val)))
-    (function-def-exp (ID params statements)
+    (function-def-exp (ID params return-type statements)
       (let* ([thunk-params
         (map
           (lambda (p)
             (cases exp p
-              (param-with-default-exp (ID rhs)
-                (list ID (a-thunk rhs the-scope-env)))
+              (param-with-default-exp (lhs rhs)
+                (cases exp lhs
+                  (assignment-lhs-exp (ID type)
+                    (list ID (a-thunk rhs the-scope-env)))
+                  (else (report-type-error 'value-of))))
               (else (report-type-error 'value-of))))
           (exp->params params))]
               [val (ref-val (newref (proc-val (a-proc ID thunk-params statements))))])

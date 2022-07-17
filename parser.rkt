@@ -11,11 +11,14 @@
 ;;; Parser
 (define rktpython-parser
   (parser
-    (start statements)
+    (start program)
     (end EOF)
     (error (lambda (tok-ok? tok-name tok-value) (printf "Error in token ~s (~s)\n" tok-name tok-value)))
     (tokens num-token id-token empty-tokens)
     (grammar
+      (program
+        ((statements) $1)
+        ((checked statements) $2)) ;;; TODO: store somewhere that the program is checked!
       (statements
         ((statement semicolon) (statements-exp (list $1)))
         ((statements statement semicolon) (statements-exp (append (exp->statements $1) (list $2)))))
@@ -35,7 +38,16 @@
         ((if-stmt) $1)
         ((for-stmt) $1))
       (assignment
-        ((ID assign expression) (assignment-exp $1 $3)))
+        ((assignment-lhs assign expression) (assignment-exp $1 $3)))
+      (assignment-lhs
+        ((ID) (assignment-lhs-exp $1 "undefined"))
+        ((ID colon type) (assignment-lhs-exp $1 (exp->type $3))))
+      (type
+        ((int) (type-exp "int"))
+        ((float) (type-exp "float"))
+        ((bool) (type-exp "bool"))
+        ((LIST) (type-exp "list"))
+        ((none) (type-exp "None")))
       (return-stmt
         ((return) (return-stmt-exp (none-exp)))
         ((return expression) (return-stmt-exp $2)))
@@ -44,13 +56,16 @@
       (print-stmt
         ((print lparanth atom rparanth) (print-stmt-exp $3)))
       (function-def
-        ((def ID lparanth params rparanth colon statements) (function-def-exp $2 $4 $7))
-        ((def ID lparanth rparanth colon statements) (function-def-exp $2 (params-exp null) $6)))
+        ((def ID lparanth params rparanth return-type statements) (function-def-exp $2 $4 (exp->type $6) $7))
+        ((def ID lparanth rparanth return-type statements) (function-def-exp $2 (params-exp null) (exp->type $5) $6)))
+      (return-type
+        ((colon) (type-exp "undefined"))
+        ((colon minus gt type) $4))
       (params
         ((param-with-default) (params-exp (list $1)))
         ((params comma param-with-default) (params-exp (append (exp->params $1) (list $3)))))
       (param-with-default
-        ((ID assign expression) (param-with-default-exp $1 $3)))
+        ((assignment-lhs assign expression) (param-with-default-exp $1 $3)))
       (if-stmt
         ((if expression colon statements else-block) (if-stmt-exp $2 $4 $5)))
       (else-block

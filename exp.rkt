@@ -16,8 +16,13 @@
   (break-exp)
   (continue-exp)
   (assignment-exp
-    (ID string?)
+    (lhs exp?)
     (rhs exp?))
+  (assignment-lhs-exp
+    (ID string?)
+    (type string?))
+  (type-exp
+    (type string?))
   (return-stmt-exp
     (exp1 exp?))
   (none-exp)
@@ -28,11 +33,12 @@
   (function-def-exp
     (ID string?)
     (params exp?)
+    (return-type string?)
     (statements exp?))
   (params-exp
     (params (list-of exp?)))
   (param-with-default-exp
-    (ID string?)
+    (lhs exp?)
     (rhs exp?))
   (if-stmt-exp
     (condition exp?)
@@ -122,6 +128,11 @@
   (cases exp exp1
     (expressions-exp (expressions) expressions)
     (else (report-type-mismatch 'exp->expressions 'expressions-exp exp1))))
+
+(define (exp->type exp1)
+  (cases exp exp1
+    (type-exp (type) type)
+    (else (report-type-mismatch 'exp->type 'type-exp exp1))))
 
 (define (replace-var-exps exp1)
   (cases exp exp1

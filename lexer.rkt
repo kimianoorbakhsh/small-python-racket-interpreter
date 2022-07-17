@@ -42,6 +42,11 @@
     ("return" (token-return))
     ("pass" (token-pass))
     ("print" (token-print))
+    ("checked" (token-checked))
+    ("int" (token-int))
+    ("float" (token-float))
+    ("bool" (token-bool))
+    ("list" (token-LIST))
     ((:or (:+ (char-range #\0 #\9))
           (:: (:+ (char-range #\0 #\9)) #\. (:+ (char-range #\0 #\9))))
       (token-NUM (string->number lexeme)))
@@ -89,4 +94,9 @@
                                     return
                                     pass
                                     print
+                                    checked
+                                    int
+                                    float
+                                    bool
+                                    LIST
                                     EOF))
