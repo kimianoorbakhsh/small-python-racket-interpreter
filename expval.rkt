@@ -21,24 +21,24 @@
 (define (expval->num val)
   (cases expval val
     (num-val (num) num)
-    (else (report-type-mismatch 'num val))))
+    (else (report-type-mismatch 'expval->num 'num val))))
 
 (define (expval->bool val)
   (cases expval val
     (bool-val (bool) bool)
-    (else (report-type-mismatch 'bool val))))
+    (else (report-type-mismatch 'expval->bool 'bool val))))
 
 (define (expval->list val)
   (cases expval val
     (list-val (lst) lst)
-    (else (report-type-mismatch 'list val))))
+    (else (report-type-mismatch 'expval->list 'list val))))
 
 (define (expval->ref val)
   (cases expval val
     (ref-val (ref) ref)
-    (else (report-type-mismatch 'ref val))))
+    (else (report-type-mismatch 'expval->ref 'ref val))))
 
 (define (expval->proc val)
   (cases expval val
     (proc-val (proc) proc)
-    (else (report-type-mismatch 'proc val))))
+    (else (report-type-mismatch 'expval->proc 'proc val))))

@@ -1,5 +1,7 @@
 #lang racket
 
+(require "errors.rkt")
+
 (provide (all-defined-out))
 
 (define the-store 'uninitialized)

@@ -1,12 +1,16 @@
 #lang racket
 
-(require "globals.rkt")
+(require (except-in (lib "eopl.ss" "eopl") exp))
+(require "store.rkt")
 (require "env.rkt")
 (require "exp.rkt")
 (require "expval.rkt")
 (require "lexer.rkt")
 (require "parser.rkt")
+(require "errors.rkt")
+(require "proc.rkt")
 
+(provide evaluate)
 (define (evaluate file-name)
   (if (file-exists? file-name)
     (let* ((lex-this (lambda (lexer input) (lambda () (lexer input))))
@@ -19,7 +23,7 @@
       (initialize-scope-env!)
       (value-of (rktpython-parser lexer))
       (displayln ""))
-    (displayln "File ~s does not exist." file-name)))
+    (report-file-does-not-exist file-name)))
 
 (define (value-of exp1)
   (cases exp exp1
@@ -46,16 +50,25 @@
     (none-exp () (none-val))
     (global-stmt-exp (ID)
       (let ([ref (expval->ref (apply-env ID the-global-env #t))])
-        (set! the-scope-env (extend-env ID (ref-val ref) the-scope-env))
+        (update-scope-env! (extend-env ID (ref-val ref) the-scope-env))
+        (void-val)))
+    (print-stmt-exp (value)
+      (begin
+        (pyprint (value-of value))
+        (displayln "")
         (void-val)))
     (function-def-exp (ID params statements)
-      (let* ([thunk-params (map (lambda (p)
-        (cases exp p
-          (param-with-default-exp (ID rhs)
-            (list ID (a-thunk (rhs) the-scope-env)))) (exp->params params)))]
-              [val (ref-val (newref (proc-val (a-proc ID thunk-params p-body))))])
-        (set! the-global-env (extend-env ID val the-global-env))
-        (set! the-scope-env (extend-env ID val the-scope-env))
+      (let* ([thunk-params
+        (map
+          (lambda (p)
+            (cases exp p
+              (param-with-default-exp (ID rhs)
+                (list ID (a-thunk rhs the-scope-env)))
+              (else (report-type-error 'value-of))))
+          (exp->params params))]
+              [val (ref-val (newref (proc-val (a-proc ID thunk-params statements))))])
+        (update-global-env! (extend-env ID val the-global-env))
+        (update-scope-env! (extend-env ID val the-scope-env))
         (void-val)))
     (if-stmt-exp (condition true-statements false-statements)
       (if (expval->bool (value-of condition))
@@ -87,7 +100,13 @@
     (not-exp (exp1)
       (bool-val (not (expval->bool (value-of exp1)))))
     (eq-sum-exp (left right)
-      (bool-val (equal? (expval->num (value-of left)) (expval->num (value-of right)))))
+      (bool-val
+        (cases expval (value-of left)
+          (num-val (num)
+            (equal? num (expval->num (value-of right))))
+          (bool-val (bool)
+            (equal? bool (expval->bool (value-of right))))
+          (else (report-type-error 'value-of)))))
     (lt-sum-exp (left right)
       (bool-val (< (expval->num (value-of left)) (expval->num (value-of right)))))
     (gt-sum-exp (left right)
@@ -98,11 +117,15 @@
         (cases expval lval
           (num-val (num) (num-val (+ num (expval->num rval))))
           (list-val (lst) (list-val (append lst (expval->list rval))))
-          (else (report-type-error)))))
+          (else (report-type-error 'value-of)))))
     (sub-exp (left right)
       (num-val (- (expval->num (value-of left)) (expval->num (value-of right)))))
     (mul-exp (left right)
-      (num-val (* (expval->num (value-of left)) (expval->num (value-of right)))))
+      (let ([lval (expval->num (value-of left))])
+        (num-val
+          (if (equal? lval 0)
+            0
+            (* lval (expval->num (value-of right)))))))
     (div-exp (left right)
       (num-val (/ (expval->num (value-of left)) (expval->num (value-of right)))))
     (plus-factor-exp (power)
@@ -117,7 +140,7 @@
       (let ([function (expval->proc (value-of function))]
             [old-scope-env the-scope-env]
             [arguments (exp->arguments arguments)])
-        (set! the-scope-env (extend-env-with-functions (init-env #f)))
+        (update-scope-env! (extend-env-with-functions (init-env #f)))
         (cases procedure function
           (a-proc (p-name params p-body)
             (let loop ([arguments arguments]
@@ -127,25 +150,25 @@
                 [(null? params) (report-arguments-len-long)]
                 [(null? arguments)
                   (let ([par-def (car params)])
-                    (set! the-scope-env (extend-env
+                    (update-scope-env! (extend-env
                       (car par-def)
                       (ref-val (newref (cadr par-def)))
                       the-scope-env))
-                    (loop args (cdr params)))]
+                    (loop arguments (cdr params)))]
                 [else
                   (let ([par-def (car params)])
-                    (set! the-scope-env (extend-env
+                    (update-scope-env! (extend-env
                       (car par-def)
                       (ref-val (newref (a-thunk (car arguments) old-scope-env)))
                       the-scope-env))
-                    (loop (cdr arguments) (cdr params)))])
-              (let ([ret-val (value-of p-body)])
-                (set! the-scope-env old-scope-env)
-                (cases expval ret-val
-                  (void-val () (none-val))
-                  (return-val (val) val)
-                  (else (report-type-error))))))
-          (else (report-type-error)))
+                    (loop (cdr arguments) (cdr params)))]))
+            (let ([ret-val (value-of p-body)])
+              (update-scope-env! old-scope-env)
+              (cases expval ret-val
+                (void-val () (none-val))
+                (return-val (val) val)
+                (else (report-type-error 'value-of)))))
+          (else (report-type-error 'value-of)))))
     (var-exp (ID)
       (let* ([ref (expval->ref (apply-env ID the-scope-env #t))]
              [w (deref ref)])
@@ -156,10 +179,19 @@
             thunk-val))))
     (bool-exp (bool) (bool-val bool))
     (num-exp (num) (num-val num))
-    (list-exp (list) (list-val (map value-of (exp->expressions list))))
+    (list-exp (list) (list-val (map value-of list)))
     (list-const-exp (values) (list-val values))
     (thunk-exp (the-thunk) (value-of-thunk the-thunk))
-    (else (report-must-not-reach-here))))))
+    (else (report-must-not-reach-here))))
+
+(define (value-of-thunk the-thunk)
+  (cases thunk the-thunk
+    (a-thunk (exp saved-env)
+      (let ([old-scope-env the-scope-env])
+        (update-scope-env! saved-env)
+        (let ([val (value-of exp)])
+          (update-scope-env! old-scope-env)
+          val)))))
 
 (define (assign ID rhs)
   (let ([val (apply-env ID the-scope-env #f)]
@@ -167,11 +199,37 @@
       (cases expval val
         (void-val ()
           (let ([ref (newref the-thunk)])
-            (if (global-scope? the-scope-env)
-              (set! the-global-env (extend-env ID (ref-val ref) the-global-env)))
-            (set! the-scope-env (extend-env ID (ref-val ref) the-scope-env))
+            (when (global-scope? the-scope-env)
+              (update-global-env! (extend-env ID (ref-val ref) the-global-env)))
+            (update-scope-env! (extend-env ID (ref-val ref) the-scope-env))
             (void-val)))
         (ref-val (ref)
           (setref! ref the-thunk)
           (void-val))
-        (else (report-type-error)))))
+        (else (report-type-error 'assign)))))
+
+(define (pyprint value)
+  (cases expval value
+    (num-val (num)
+      (if (integer? num)
+        (display num)
+        (display (exact->inexact num))))
+    (bool-val (bool)
+      (if bool
+        (display "True")
+        (display "False")))
+    (none-val ()
+      (display "None"))
+    (list-val (lst)
+      (begin
+        (display "[")
+        (let loop ([lst lst])
+          (if (null? lst)
+            (void-val)
+            (begin
+              (pyprint (car lst))
+              (when (not (null? (cdr lst)))
+                (display ", "))
+              (loop (cdr lst)))))
+        (display "]")))
+    (else (report-type-error 'print))))

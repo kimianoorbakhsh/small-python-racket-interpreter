@@ -1,6 +1,10 @@
 #lang racket
 
 (require (lib "eopl.ss" "eopl"))
+(require "expval.rkt")
+(require "store.rkt")
+(require "proc.rkt")
+(require "errors.rkt")
 
 (provide (all-defined-out))
 
@@ -25,7 +29,7 @@
       (report-invalid-env env))))
 
 (define (init-env is-global)
-  (extend-env "is-global" (bool-val global) (empty-env)))
+  (extend-env "is-global" (bool-val is-global) (empty-env)))
 
 (define (extend-env-with-functions env)
   (let loop ([env env]
@@ -45,9 +49,9 @@
                   (else
                     (loop env saved-env)))
                 (loop env saved-env))))
-          (bool-val (bool) (loop env saved-env)) ;For $global in env with holds a bool-val
+          (bool-val (bool) (loop env saved-env)) ;For is-global in env with holds a bool-val
           (else
-            (report-type-error)))))))
+            (report-type-error 'extend-env-with-functions)))))))
 
 (define global-scope?
   (lambda (env)
@@ -63,3 +67,8 @@
 (define (initialize-scope-env!)
   (set! the-scope-env (init-env #t)))
 
+(define (update-global-env! env)
+  (set! the-global-env env))
+
+(define (update-scope-env! env)
+  (set! the-scope-env env))

@@ -2,6 +2,9 @@
 
 (require (lib "eopl.ss" "eopl"))
 (require "errors.rkt")
+(require "env.rkt")
+(require "store.rkt")
+(require "expval.rkt")
 
 (provide (all-defined-out))
 
@@ -20,6 +23,8 @@
   (none-exp)
   (global-stmt-exp
     (ID string?))
+  (print-stmt-exp
+    (value exp?))
   (function-def-exp
     (ID string?)
     (params exp?)
@@ -88,11 +93,11 @@
   (num-exp
     (num number?))
   (list-exp
-    (list exp?))
+    (list (list-of exp?)))
   (expressions-exp
     (expressions (list-of exp?)))
   (list-const-exp
-    (values (list-of exp?)))
+    (values list?))
   (thunk-exp
     (the-thunk thunk?)))
 
@@ -101,22 +106,22 @@
 (define (exp->statements exp1)
   (cases exp exp1
     (statements-exp (statements) statements)
-    (else (report-type-mismatch 'statements-exp exp1))))
+    (else (report-type-mismatch 'exp->statements 'statements-exp exp1))))
 
 (define (exp->params exp1)
   (cases exp exp1
     (params-exp (params) params)
-    (else (report-type-mismatch 'params-exp exp1))))
+    (else (report-type-mismatch 'exp->params 'params-exp exp1))))
 
 (define (exp->arguments exp1)
   (cases exp exp1
     (arguments-exp (arguments) arguments)
-    (else (report-type-mismatch 'arguments-exp exp1))))
+    (else (report-type-mismatch 'exp->arguments 'arguments-exp exp1))))
 
 (define (exp->expressions exp1)
   (cases exp exp1
     (expressions-exp (expressions) expressions)
-    (else (report-type-mismatch 'expressions-exp exp1))))
+    (else (report-type-mismatch 'exp->expressions 'expressions-exp exp1))))
 
 (define (replace-var-exps exp1)
   (cases exp exp1
@@ -191,8 +196,8 @@
             (bool-val (bool) (bool-exp bool))
             (none-val () (none-exp))
             (list-val (lst) (list-const-exp lst))
-            (else (report-type-error))
-          (thunk-exp w)))))
+            (else (report-type-error 'replace-var-exps)))
+          (thunk-exp w))))
     (bool-exp (bool) exp1)
     (num-exp (num) exp1)
     (list-exp (list)
@@ -203,4 +208,12 @@
         (map replace-var-exps expressions)))
     (list-const-exp (values) exp1)
     (thunk-exp (the-thunk) exp1)
-    (else (report-type-error))))
+    (else (report-type-error 'replace-var-exps))))
+
+
+;;; Thunk
+
+(define-datatype thunk thunk?
+  (a-thunk
+   (exp exp?)
+   (saved-env env?)))

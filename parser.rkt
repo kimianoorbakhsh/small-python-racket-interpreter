@@ -26,6 +26,7 @@
         ((assignment) $1)
         ((global-stmt) $1)
         ((return-stmt) $1)
+        ((print-stmt) $1)
         ((pass) (pass-exp))
         ((break) (break-exp))
         ((continue) (continue-exp)))
@@ -40,6 +41,8 @@
         ((return expression) (return-stmt-exp $2)))
       (global-stmt
         ((global ID) (global-stmt-exp $2)))
+      (print-stmt
+        ((print lparanth atom rparanth) (print-stmt-exp $3)))
       (function-def
         ((def ID lparanth params rparanth colon statements) (function-def-exp $2 $4 $7))
         ((def ID lparanth rparanth colon statements) (function-def-exp $2 (params-exp null) $6)))
@@ -107,7 +110,7 @@
         ((NUM) (num-exp $1))
         ((list) $1))
       (list
-        ((lbrack expressions rbrack) (list-exp $2))
+        ((lbrack expressions rbrack) (list-exp (exp->expressions $2)))
         ((lbrack rbrack) (list-exp null)))
       (expressions
         ((expressions comma expression) (expressions-exp (append (exp->expressions $1) (list $3))))
