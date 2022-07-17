@@ -1,5 +1,6 @@
 #lang racket
 
+(require (lib "eopl.ss" "eopl"))
 (provide (all-defined-out))
 
 (define (report-type-mismatch expected val)
@@ -15,7 +16,7 @@
   (eopl:error 'setref! "Invalid refrence: ~s" ref))
 
 (define (report-must-not-reach-here)
-  (println "Must not reach here.")))
+  (println "Must not reach here."))
 
 (define (report-arguments-len-long)
-  (println "Arguments length is too long.")))
+  (println "Arguments length is too long."))
