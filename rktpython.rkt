@@ -9,6 +9,7 @@
 (require "parser.rkt")
 (require "errors.rkt")
 (require "proc.rkt")
+(require "typing.rkt")
 
 (provide evaluate)
 (define (evaluate file-name)
@@ -18,6 +19,7 @@
             (lex-this
               rktpython-lexer
                 (open-input-string (file->string file-name)))))
+      (initialize-typing!)
       (initialize-store!)
       (initialize-global-env!)
       (initialize-scope-env!)

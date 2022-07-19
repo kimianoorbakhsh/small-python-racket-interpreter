@@ -5,6 +5,7 @@
          parser-tools/yacc)
 (require "lexer.rkt")
 (require "exp.rkt")
+(require "typing.rkt")
 
 (provide (all-defined-out))
 
@@ -18,7 +19,11 @@
     (grammar
       (program
         ((statements) $1)
-        ((checked statements) $2)) ;;; TODO: store somewhere that the program is checked!
+        ((checked statements)
+          (begin
+            (enable-checked!)
+            $2)
+        ))
       (statements
         ((statement semicolon) (statements-exp (list $1)))
         ((statements statement semicolon) (statements-exp (append (exp->statements $1) (list $2)))))
