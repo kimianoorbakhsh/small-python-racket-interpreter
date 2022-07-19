@@ -45,14 +45,14 @@
       (assignment
         ((assignment-lhs assign expression) (assignment-exp $1 $3)))
       (assignment-lhs
-        ((ID) (assignment-lhs-exp $1 "undefined"))
-        ((ID colon type) (assignment-lhs-exp $1 (exp->type $3))))
+        ((ID) (assignment-lhs-exp $1 (undefined-type)))
+        ((ID colon type) (assignment-lhs-exp $1 $3)))
       (type
-        ((int) (type-exp "int"))
-        ((float) (type-exp "float"))
-        ((bool) (type-exp "bool"))
-        ((LIST) (type-exp "list"))
-        ((none) (type-exp "None")))
+        ((int) (int-type))
+        ((float) (float-type))
+        ((bool) (bool-type))
+        ((LIST) (list-type))
+        ((none) (none-type)))
       (return-stmt
         ((return) (return-stmt-exp (none-exp)))
         ((return expression) (return-stmt-exp $2)))
@@ -61,10 +61,10 @@
       (print-stmt
         ((print lparanth atom rparanth) (print-stmt-exp $3)))
       (function-def
-        ((def ID lparanth params rparanth return-type statements) (function-def-exp $2 $4 (exp->type $6) $7))
-        ((def ID lparanth rparanth return-type statements) (function-def-exp $2 (params-exp null) (exp->type $5) $6)))
+        ((def ID lparanth params rparanth return-type statements) (function-def-exp $2 $4 $6 $7))
+        ((def ID lparanth rparanth return-type statements) (function-def-exp $2 (params-exp null) $5 $6)))
       (return-type
-        ((colon) (type-exp "undefined"))
+        ((colon) (undefined-type))
         ((to type colon) $2))
       (params
         ((param-with-default) (params-exp (list $1)))
