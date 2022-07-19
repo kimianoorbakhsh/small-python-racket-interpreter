@@ -47,6 +47,7 @@
     ("float" (token-float))
     ("bool" (token-bool))
     ("list" (token-LIST))
+    ("->" (token-to))
     ((:or (:+ (char-range #\0 #\9))
           (:: (:+ (char-range #\0 #\9)) #\. (:+ (char-range #\0 #\9))))
       (token-NUM (string->number lexeme)))
@@ -99,4 +100,5 @@
                                     float
                                     bool
                                     LIST
+                                    to
                                     EOF))

@@ -60,7 +60,7 @@
         ((def ID lparanth rparanth return-type statements) (function-def-exp $2 (params-exp null) (exp->type $5) $6)))
       (return-type
         ((colon) (type-exp "undefined"))
-        ((colon minus gt type) $4))
+        ((to type colon) $2))
       (params
         ((param-with-default) (params-exp (list $1)))
         ((params comma param-with-default) (params-exp (append (exp->params $1) (list $3)))))
