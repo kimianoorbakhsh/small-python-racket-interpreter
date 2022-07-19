@@ -1,11 +1,12 @@
 #lang racket
 
 (require (lib "eopl.ss" "eopl"))
+(require racket/lazy-require)
 (require "errors.rkt")
 (require "env.rkt")
 (require "store.rkt")
 (require "expval.rkt")
-(require "typing.rkt")
+(lazy-require ["typing.rkt" (type?)])
 
 (provide (all-defined-out))
 

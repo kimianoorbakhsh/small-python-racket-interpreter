@@ -19,7 +19,7 @@
   (cases environment env
     (empty-env ()
       (if with-error
-        (report-no-binding-found search-var)
+        (report-no-binding-found 'apply-env search-var)
         (void-val)))
     (extend-env (saved-var saved-val saved-env)
       (if (equal? saved-var search-var)

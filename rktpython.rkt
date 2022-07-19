@@ -23,8 +23,11 @@
       (initialize-store!)
       (initialize-global-env!)
       (initialize-scope-env!)
-      (value-of (rktpython-parser lexer))
-      (displayln ""))
+      (let ([program (rktpython-parser lexer)])
+        (when is-checked
+          (type-of program))
+        (value-of program)
+        (displayln "")))
     (report-file-does-not-exist file-name)))
 
 (define (value-of exp1)
@@ -47,7 +50,7 @@
       (continue-val))
     (assignment-exp (lhs rhs)
       (cases exp lhs
-        (assignment-lhs-exp (ID type)
+        (assignment-lhs-exp (ID dtype)
           (assign ID rhs))
         (else (report-type-error 'value-of))))
     (return-stmt-exp (exp1)
@@ -69,7 +72,7 @@
             (cases exp p
               (param-with-default-exp (lhs rhs)
                 (cases exp lhs
-                  (assignment-lhs-exp (ID type)
+                  (assignment-lhs-exp (ID dtype)
                     (list ID (a-thunk rhs the-scope-env)))
                   (else (report-type-error 'value-of))))
               (else (report-type-error 'value-of))))
@@ -155,7 +158,7 @@
                        [params params])
               (cond
                 [(and (null? params) (null? arguments)) 88]
-                [(null? params) (report-arguments-len-long)]
+                [(null? params) (report-arguments-len-long 'value-of)]
                 [(null? arguments)
                   (let ([par-def (car params)])
                     (update-scope-env! (extend-env
