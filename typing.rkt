@@ -75,17 +75,10 @@
 
 (define (report-unequal-types t1 t2 exp)
   (eopl:error 'check-equal-type!
-    "Types didn't match: ~s != ~a in~%~a"
-		(type-to-external-form t1)
-		(type-to-external-form t2)
-		exp))
-
-(define (report-type-not-in t types exp)
-	(eopl:error 'check-type-in!
-		"Type ~s not in [~a] in~%~a"
-		(type-to-external-form t)
-		(map type-to-external-form types)
-		exp))
+    "Expected type of expression ~a to be ~a, but got ~a"
+    exp
+    (type-to-external-form t2)
+    (type-to-external-form t1)))
 
 (define (check-equal-type! t1 t2 exp)
 	(when (not
@@ -94,6 +87,13 @@
 			(equal? t2 (undefined-type))
 			(equal? t1 t2)))
 		(report-unequal-types t1 t2 exp)))
+
+(define (report-type-not-in t types exp)
+	(eopl:error 'check-type-in!
+		"Expected type of expression ~a to be one of ~a, but got ~a"
+    exp
+		(map type-to-external-form types)
+		(type-to-external-form t)))
 
 (define (check-type-in! t types exp)
 	(when (not (member t (cons (undefined-type) types)))
