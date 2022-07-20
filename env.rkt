@@ -8,12 +8,12 @@
 
 (provide (all-defined-out))
 
-(define-datatype environment env?
+(define-datatype environment environment?
   (empty-env)
   (extend-env
     (var string?)
     (val expval?)
-    (saved-env env?)))
+    (saved-env environment?)))
 
 (define (apply-env search-var env with-error)
   (cases environment env

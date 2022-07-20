@@ -107,7 +107,6 @@
   (thunk-exp
     (the-thunk thunk?)))
 
-
 ;;; Extractor functions
 (define (exp->statements exp1)
   (cases exp exp1
@@ -222,4 +221,4 @@
 (define-datatype thunk thunk?
   (a-thunk
    (exp exp?)
-   (saved-env env?)))
+   (saved-env environment?)))
