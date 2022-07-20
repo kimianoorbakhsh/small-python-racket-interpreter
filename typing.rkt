@@ -11,7 +11,7 @@
 (define (initialize-typing!)
 	(begin
 		(set! is-checked #f)
-		(initialize-scope-tenv!)))
+		(initialize-the-tenv!)))
 
 (define (enable-checked!)
 	(set! is-checked #t))
@@ -31,18 +31,18 @@
 (define-datatype type-environment type-environment?
 	(empty-tenv-record)
 	(extended-tenv-record
-		(sym string?)
+		(var string?)
 		(type type?)
-		(tenv type-environment?)))
+		(next-tenv type-environment?)))
 
-(define (apply-tenv tenv sym)
+(define (apply-tenv search-var tenv)
 	(cases type-environment tenv
 		(empty-tenv-record ()
-			(report-no-binding-found 'apply-tenv sym))
-		(extended-tenv-record (other-sym t next-tenv)
-			(if (equal? sym other-sym)
-				t
-				(apply-tenv next-tenv sym)))))
+			(report-no-binding-found 'apply-tenv search-var))
+		(extended-tenv-record (saved-var saved-type next-tenv)
+			(if (equal? search-var saved-var)
+				saved-type
+				(apply-tenv search-var next-tenv)))))
 
 (define empty-tenv empty-tenv-record)
 (define extend-tenv extended-tenv-record)
@@ -105,10 +105,10 @@
 		function
 		(type-to-external-form f-type)))
 
-(define the-scope-tenv 'uninitialized)
+(define the-tenv 'uninitialized)
 
-(define (initialize-scope-tenv!)
-  (set! the-scope-tenv (empty-tenv)))
+(define (initialize-the-tenv!)
+  (set! the-tenv (empty-tenv)))
 
 (define (type-of exp1)
 	(cases exp exp1
@@ -149,7 +149,7 @@
               (else (report-type-error 'type-of))))
 					(exp->params params))]
 						 [tf (function-type param-names param-types return-type)])
-				(set! the-scope-tenv (extend-tenv ID tf the-scope-tenv))
+				(set! the-tenv (extend-tenv ID tf the-tenv))
 				(none-type)))
 		(if-stmt-exp (condition true-statements false-statements)
 			(begin
@@ -252,7 +252,7 @@
 						return-type)
 					(else (report-not-a-function f-type function)))))
 		(var-exp (ID)
-			(apply-tenv the-scope-tenv ID))
+			(apply-tenv ID the-tenv))
 		(bool-exp (bool)
       (bool-type))
     (num-exp (num)
@@ -267,6 +267,6 @@
 
 (define (assign-type ID dtype rhs)
 	(begin
-		(set! the-scope-tenv (extend-tenv ID dtype the-scope-tenv))
+		(set! the-tenv (extend-tenv ID dtype the-tenv))
 		(check-equal-type! (type-of rhs) dtype rhs)
 		(none-type)))

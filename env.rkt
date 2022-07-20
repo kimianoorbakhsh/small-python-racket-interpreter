@@ -9,34 +9,42 @@
 (provide (all-defined-out))
 
 (define-datatype environment environment?
-  (empty-env)
-  (extend-env
+  (empty-env-record
+    (global boolean?))
+  (extended-env-record
+    (global boolean?)
     (var string?)
     (val expval?)
-    (saved-env environment?)))
+    (next-env environment?)))
 
 (define (apply-env search-var env with-error)
   (cases environment env
-    (empty-env ()
+    (empty-env-record (global)
       (if with-error
         (report-no-binding-found 'apply-env search-var)
         (void-val)))
-    (extend-env (saved-var saved-val saved-env)
+    (extended-env-record (global saved-var saved-val next-env)
       (if (equal? saved-var search-var)
         saved-val
-        (apply-env search-var saved-env with-error)))
+        (apply-env search-var next-env with-error)))
     (else
       (report-invalid-env env))))
 
-(define (init-env is-global)
-  (extend-env "is-global" (bool-val is-global) (empty-env)))
+(define empty-env empty-env-record)
+
+(define (extend-env var val env)
+  (cases environment env
+    (empty-env-record (global)
+      (extended-env-record global var val env))
+    (extended-env-record (global next-var next-val next-env)
+      (extended-env-record global var val env))))
 
 (define (extend-env-with-functions env)
   (let loop ([env env]
-              [g-env the-global-env])
+             [g-env the-global-env])
     (cases environment g-env
-      (empty-env () env)
-      (extend-env (var val saved-env)
+      (empty-env-record (global) env)
+      (extended-env-record (global var val next-env)
         (cases expval val
           (ref-val (ref)
             (let ([w (deref ref)])
@@ -45,27 +53,29 @@
                   (proc-val (proc)
                     (cases procedure proc
                       (a-proc (ID params p-body)
-                        (loop (extend-env ID val env) saved-env))))
+                        (loop (extend-env ID val env) next-env))))
                   (else
-                    (loop env saved-env)))
-                (loop env saved-env))))
-          (bool-val (bool) (loop env saved-env)) ;For is-global in env with holds a bool-val
+                    (loop env next-env)))
+                (loop env next-env))))
           (else
             (report-type-error 'extend-env-with-functions)))))))
 
-(define global-scope?
-  (lambda (env)
-    (expval->bool (apply-env "is-global" env #t))))
+(define (global-scope? env)
+  (cases environment env
+    (empty-env-record (global)
+      global)
+    (extended-env-record (global var val next-env)
+      global)))
 
 (define the-global-env 'uninitialized)
 
 (define the-scope-env 'uninitialized)
 
 (define (initialize-global-env!)
-  (set! the-global-env (init-env #t)))
+  (set! the-global-env (empty-env #t)))
 
 (define (initialize-scope-env!)
-  (set! the-scope-env (init-env #t)))
+  (set! the-scope-env (empty-env #t)))
 
 (define (update-global-env! env)
   (set! the-global-env env))

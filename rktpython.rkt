@@ -151,7 +151,7 @@
       (let ([function (expval->proc (value-of function))]
             [old-scope-env the-scope-env]
             [arguments (exp->arguments arguments)])
-        (update-scope-env! (extend-env-with-functions (init-env #f)))
+        (update-scope-env! (extend-env-with-functions (empty-env #f)))
         (cases procedure function
           (a-proc (p-name params p-body)
             (let loop ([arguments arguments]
