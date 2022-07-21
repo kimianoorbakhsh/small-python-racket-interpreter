@@ -14,21 +14,22 @@
 (provide evaluate)
 (define (evaluate file-name)
   (if (file-exists? file-name)
-    (let* ((lex-this (lambda (lexer input) (lambda () (lexer input))))
-           (lexer
-            (lex-this
-              rktpython-lexer
-                (open-input-string (file->string file-name)))))
+    (begin
       (initialize-typing!)
       (initialize-store!)
       (initialize-global-env!)
       (initialize-scope-env!)
-      (let ([program (rktpython-parser lexer)])
+      (let* ([code (file->string file-name)]
+             [input (open-input-string code)]
+             [lexer (lex-this rktpython-lexer input)]
+             [program (rktpython-parser lexer)])
         (when is-checked
           (type-of program))
-        (value-of program)
-        (displayln "")))
+        (value-of program)))
     (report-file-does-not-exist file-name)))
+
+(define (lex-this lexer input)
+  (lambda () (lexer input)))
 
 (define (value-of exp1)
   (cases exp exp1
@@ -61,10 +62,9 @@
         (update-scope-env! (extend-env ID (ref-val ref) the-scope-env))
         (void-val)))
     (print-stmt-exp (value)
-      (begin
-        (pyprint (value-of value))
-        (displayln "")
-        (void-val)))
+      (pyprint (value-of value))
+      (displayln "")
+      (void-val))
     (function-def-exp (ID params return-type statements)
       (let* ([thunk-params
         (map
@@ -232,15 +232,14 @@
     (none-val ()
       (display "None"))
     (list-val (lst)
-      (begin
-        (display "[")
-        (let loop ([lst lst])
-          (if (null? lst)
-            (void-val)
-            (begin
-              (pyprint (car lst))
-              (when (not (null? (cdr lst)))
-                (display ", "))
-              (loop (cdr lst)))))
-        (display "]")))
+      (display "[")
+      (let loop ([lst lst])
+        (if (null? lst)
+          (void-val)
+          (begin
+            (pyprint (car lst))
+            (when (not (null? (cdr lst)))
+              (display ", "))
+            (loop (cdr lst)))))
+      (display "]"))
     (else (report-type-error 'print))))

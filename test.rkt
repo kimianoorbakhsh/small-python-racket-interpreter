@@ -18,6 +18,8 @@
       (display "Actual:\n")
       (with-handlers ([exn:fail? (lambda (exn) (printf "Error: ~a\n" (exn-message exn)))])
         (evaluate (string-append tests-directory (symbol->string (car tests)) "_in.txt")))
+      (displayln "")
       (display "Expected:\n")
       (display (file->string (string-append tests-directory (symbol->string (car tests)) "_out.txt")))
+      (displayln "")
       (loop (cdr tests)))))
