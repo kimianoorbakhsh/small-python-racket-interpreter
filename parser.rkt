@@ -59,7 +59,7 @@
       (global-stmt
         ((global ID) (global-stmt-exp $2)))
       (print-stmt
-        ((print lparanth atom rparanth) (print-stmt-exp $3)))
+        ((print lparanth expression rparanth) (print-stmt-exp $3)))
       (function-def
         ((def ID lparanth params rparanth return-type statements) (function-def-exp $2 $4 $6 $7))
         ((def ID lparanth rparanth return-type statements) (function-def-exp $2 (params-exp null) $5 $6)))

@@ -1,0 +1,9 @@
+def fun(a = 3):
+    b = 3 + a * 4 ** 2;
+    return b / 2 + 17;
+;
+
+a = 7;
+c = fun(a - 2);
+b = c + 5;
+print(b);

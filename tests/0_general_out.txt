@@ -1,0 +1,3 @@
+True
+False
+9.6

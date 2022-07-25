@@ -1,0 +1,26 @@
+def f(n = 1):
+    a = n;
+    b = n - 1;
+    return a ** b;
+;
+
+def g():
+    c = 1 > 7 and 13 < 17 or not 1 == 1;
+    print(1 > 7 and 13 < 17 or not 1 == 1);
+    return c;
+;
+
+h = f;
+if g():
+    a = h(3);
+    print(a);
+else:
+    a = h(4);
+    print(a);
+;
+
+if True:
+    print(404);
+else:
+    print(200);
+;

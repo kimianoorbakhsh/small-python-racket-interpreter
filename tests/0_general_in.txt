@@ -1,0 +1,8 @@
+x = 1 == 3 or 5 < 7 and not 4 == 12;
+print(x);
+c = not 1 == 3 and not 5 < 7 and 4 == 12;
+print(c);
+a = 3;
+b = 4;
+a = a * b ** 2 / 5;
+print(a);

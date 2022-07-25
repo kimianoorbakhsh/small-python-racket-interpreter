@@ -217,19 +217,22 @@
             [arg-types (map type-of (exp->arguments arguments))])
         (cases type f-type
           (function-type (param-names param-types return-type)
-            (let loop ([arguments arguments]
-                       [arg-types arg-types]
-                       [param-names param-names]
-                       [param-types param-types])
-              (cond
-                [(null? arg-types) 88]
-                [(null? param-types) (report-arguments-len-long 'type-of)]
-                [else
-                  (check-equal-type!
-                    (car arg-types)
-                    (car param-types)
-                    (car arguments))
-                  (loop (cdr arguments) (cdr arg-types) (cdr param-names) (cdr param-types))]))
+            (cases exp arguments
+              (arguments-exp (arg-list)
+                (let loop ([arguments arg-list]
+                          [arg-types arg-types]
+                          [param-names param-names]
+                          [param-types param-types])
+                  (cond
+                    [(null? arg-types) 88]
+                    [(null? param-types) (report-arguments-len-long 'type-of)]
+                    [else
+                      (check-equal-type!
+                        (car arg-types)
+                        (car param-types)
+                        (car arguments))
+                      (loop (cdr arguments) (cdr arg-types) (cdr param-names) (cdr param-types))])))
+              (else (report-type-error 'type-of)))
             return-type)
           (else (report-not-a-function f-type function)))))
     (var-exp (ID)

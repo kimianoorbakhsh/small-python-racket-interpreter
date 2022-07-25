@@ -1,0 +1,7 @@
+def f():
+    return 9 / 0;
+;
+
+a = 0 * f();
+b = a + 10;
+print(b);
